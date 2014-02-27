@@ -9,12 +9,17 @@ http://molecularmusings.wordpress.com/tag/scheduler/
 
 Example
 -------
-	using namespace orbit;
+    using namespace orbit;
     Scheduler scheduler;
     scheduler.initialise(4);
 
-    auto task = scheduler.addAndRunTask(nullptr, 
-    	[](){std::cout << "HelloWorld";});
+    std::string helloWorld("HelloWorld");
+    auto task = scheduler.addAndRunTask(&helloWorld, 
+        [](const TaskData &_data)
+        {
+            std::string message = *static_cast<std::string*>(_data.kernelData);
+            std::cout << message;
+        });
     scheduler.wait(task);
 
 
