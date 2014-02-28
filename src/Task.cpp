@@ -90,42 +90,61 @@ namespace orbit
         return queue.tryPop(task) ? task : nullptr;
     }
 
+
+    class Scheduler::Pimpl
+    {
+    public:
+        Pimpl(Scheduler &_scheduler) : threads(_scheduler, queue)
+        {
+        }
+
+        ThreadPool threads;
+        TaskPool taskPool;
+        TaskQueue queue;
+        Kernel emptyKernal;
+    };
+
+    Scheduler::Scheduler()
+    {
+        impl = new Pimpl(*this);
+    }
     Scheduler::~Scheduler()
     {
-        threads.shutdown();
+        impl->threads.shutdown();
     }
 
     void Scheduler::initialise(uint8_t _cores)
     {
-        threads.initialise(_cores);
+        threadType = MAIN;
+        impl->threads.initialise(_cores);
     }
 
     TaskId Scheduler::addTask(void *_kernelData, Kernel _kernel)
     {
-        Task* task = taskPool.obtainTask();
+        Task* task = impl->taskPool.obtainTask();
         task->kernel = _kernel;
         task->taskData.kernelData = _kernelData;
 
-        return TaskId(taskPool.getTaskOffset(task), task->generation);
+        return TaskId(impl->taskPool.getTaskOffset(task), task->generation);
     }
 
     TaskId Scheduler::addAndRunTask(void *_kernelData, Kernel _kernel)
     {
-        Task* task = taskPool.obtainTask();
+        Task* task = impl->taskPool.obtainTask();
         task->kernel = _kernel;
         task->taskData.kernelData = _kernelData;
 
-        queue.queueTask(task);
+        impl->queue.queueTask(task);
 
-        return TaskId(taskPool.getTaskOffset(task), task->generation);
+        return TaskId(impl->taskPool.getTaskOffset(task), task->generation);
     }
 
     TaskId Scheduler::addEmptyTask()
     {
-        Task* root = taskPool.obtainTask();
-        root->kernel = emptyKernal;
+        Task* root = impl->taskPool.obtainTask();
+        root->kernel = impl->emptyKernal;
 
-        return TaskId(taskPool.getTaskOffset(root), root->generation);
+        return TaskId(impl->taskPool.getTaskOffset(root), root->generation);
     }
 
     TaskId Scheduler::addStreamingTask(Kernel _kernel, void *_kernelData,
@@ -135,18 +154,18 @@ namespace orbit
         const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
-        Task* root = taskPool.obtainTask();
-        root->kernel = emptyKernal;
+        Task* root = impl->taskPool.obtainTask();
+        root->kernel = impl->emptyKernal;
         root->openTasks = (_elementCount % N == 0) ? N + 1 : N + 2;
         root->parent = Task::NO_PARENT;
 
-        TaskId::Offset rootOffset = taskPool.getTaskOffset(root);
+        TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
             const uint32_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -158,14 +177,14 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[0] =
                     static_cast<char*>(_os0.data) + i*_os0.elementStride*perElementCount;
 
-                queue.queueTask(task);
+                impl->queue.queueTask(task);
             }
 
             if (_elementCount % N != 0)
             {
                 const uint32_t handled = perElementCount * N;
 
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -177,8 +196,7 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[0] =
                     static_cast<char*>(_os0.data) + N*_os0.elementStride*perElementCount;
 
-                queue.queueTask(task);
-
+                impl->queue.queueTask(task);
             }
         }
 
@@ -193,18 +211,18 @@ namespace orbit
         const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
-        Task* root = taskPool.obtainTask();
-        root->kernel = emptyKernal;
+        Task* root = impl->taskPool.obtainTask();
+        root->kernel = impl->emptyKernal;
         root->openTasks = (_elementCount % N == 0) ? N + 1 : N + 2;
         root->parent = Task::NO_PARENT;
 
-        TaskId::Offset rootOffset = taskPool.getTaskOffset(root);
+        TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
             const uint32_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -222,14 +240,14 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[1] =
                     static_cast<char*>(_os1.data) + i*_os1.elementStride*perElementCount;
 
-                queue.queueTask(task);
+                impl->queue.queueTask(task);
             }
 
             if (_elementCount % N != 0)
             {
                 const uint32_t handled = perElementCount * N;
 
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -247,8 +265,7 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[1] =
                     static_cast<char*>(_os1.data) + N*_os1.elementStride*perElementCount;
 
-                queue.queueTask(task);
-
+                impl->queue.queueTask(task);
             }
         }
 
@@ -264,18 +281,18 @@ namespace orbit
         const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
-        Task* root = taskPool.obtainTask();
-        root->kernel = emptyKernal;
+        Task* root = impl->taskPool.obtainTask();
+        root->kernel = impl->emptyKernal;
         root->openTasks = (_elementCount % N == 0) ? N + 1 : N + 2;
         root->parent = Task::NO_PARENT;
 
-        TaskId::Offset rootOffset = taskPool.getTaskOffset(root);
+        TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
             const uint32_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -299,14 +316,14 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[2] =
                     static_cast<char*>(_os2.data) + i*_os2.elementStride*perElementCount;
 
-                queue.queueTask(task);
+                impl->queue.queueTask(task);
             }
 
             if (_elementCount % N != 0)
             {
                 const uint32_t handled = perElementCount * N;
 
-                Task* task = taskPool.obtainTask();
+                Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
                 task->parent = rootOffset;
                 task->taskData.kernelData = _kernelData;
@@ -330,8 +347,7 @@ namespace orbit
                 task->taskData.specificData.streamingData.outputStreams[2] =
                     static_cast<char*>(_os2.data) + N*_os2.elementStride*perElementCount;
 
-                queue.queueTask(task);
-
+                impl->queue.queueTask(task);
             }
         }
 
@@ -340,23 +356,23 @@ namespace orbit
 
     void Scheduler::addChild(const TaskId& _parent, const TaskId& _child)
     {
-        Task* parentTask = taskPool.getTask(_parent.offset);
+        Task* parentTask = impl->taskPool.getTask(_parent.offset);
         parentTask->openTasks++;
 
-        Task* childTask = taskPool.getTask(_child.offset);
+        Task* childTask = impl->taskPool.getTask(_child.offset);
         childTask->parent = _parent.offset;
     }
 
     void Scheduler::runTask(const TaskId& _id)
     {
-        Task* task = taskPool.getTask(_id.offset);
-        queue.queueTask(task);
+        Task* task = impl->taskPool.getTask(_id.offset);
+        impl->queue.queueTask(task);
     }
 
     void Scheduler::wait(const TaskId& _taskId)
     {
         // wait until the task and all its children have completed
-        while (!taskPool.isTaskFinished(_taskId))
+        while (!impl->taskPool.isTaskFinished(_taskId))
         {
             helpWithWork();
         }
@@ -364,7 +380,7 @@ namespace orbit
 
     void Scheduler::waitWithoutHelping(const TaskId& _taskId)
     {
-        while (!taskPool.isTaskFinished(_taskId))
+        while (!impl->taskPool.isTaskFinished(_taskId))
         {
             std::this_thread::yield();
         }
@@ -372,7 +388,7 @@ namespace orbit
 
     void Scheduler::helpWithWork(void)
     {
-        Task* task = queue.getAvailableTask();
+        Task* task = impl->queue.getAvailableTask();
         if (task)
         {
             workOnTask(task);
@@ -409,12 +425,12 @@ namespace orbit
             if (task->parent != Task::NO_PARENT)
             {
                 // tell our parent that we're finished
-                Task* parent = taskPool.getTask(task->parent);
+                Task* parent = impl->taskPool.getTask(task->parent);
                 finishTask(parent);
             }
 
             // this task has finished completely, remove it
-            taskPool.returnTask(task);
+            impl->taskPool.returnTask(task);
         }
     }
 
