@@ -149,9 +149,9 @@ namespace orbit
 
     TaskId Scheduler::addStreamingTask(Kernel _kernel, void *_kernelData,
         InputStream _is0, OutputStream _os0,
-        uint32_t _elementCount, uint32_t _elementsPerTask)
+        size_t _elementCount, size_t _elementsPerTask)
     {
-        const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
+        const size_t N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
         Task* root = impl->taskPool.obtainTask();
@@ -162,7 +162,7 @@ namespace orbit
         TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
-            const uint32_t perElementCount = _elementCount / N;
+            const size_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
                 Task* task = impl->taskPool.obtainTask();
@@ -182,7 +182,7 @@ namespace orbit
 
             if (_elementCount % N != 0)
             {
-                const uint32_t handled = perElementCount * N;
+                const size_t handled = perElementCount * N;
 
                 Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
@@ -206,9 +206,9 @@ namespace orbit
     TaskId Scheduler::addStreamingTask(Kernel _kernel, void *_kernelData,
         InputStream _is0, OutputStream _os0,
         InputStream _is1, OutputStream _os1,
-        uint32_t _elementCount, uint32_t _elementsPerTask)
+        size_t _elementCount, size_t _elementsPerTask)
     {
-        const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
+        const size_t N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
         Task* root = impl->taskPool.obtainTask();
@@ -219,7 +219,7 @@ namespace orbit
         TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
-            const uint32_t perElementCount = _elementCount / N;
+            const size_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
                 Task* task = impl->taskPool.obtainTask();
@@ -245,7 +245,7 @@ namespace orbit
 
             if (_elementCount % N != 0)
             {
-                const uint32_t handled = perElementCount * N;
+                const size_t handled = perElementCount * N;
 
                 Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
@@ -276,9 +276,9 @@ namespace orbit
         InputStream _is0, OutputStream _os0,
         InputStream _is1, OutputStream _os1,
         InputStream _is2, OutputStream _os2,
-        uint32_t _elementCount, uint32_t _elementsPerTask)
+        size_t _elementCount, size_t _elementsPerTask)
     {
-        const int N = determineNumberOfTasks(_elementCount, _elementsPerTask);
+        const size_t N = determineNumberOfTasks(_elementCount, _elementsPerTask);
 
         // add a root task used for synchronisation
         Task* root = impl->taskPool.obtainTask();
@@ -289,7 +289,7 @@ namespace orbit
         TaskId::Offset rootOffset = impl->taskPool.getTaskOffset(root);
         {
             // split the task into several subtasks, according to the size of the input/output streams
-            const uint32_t perElementCount = _elementCount / N;
+            const size_t perElementCount = _elementCount / N;
             for (int i = 0; i < N; ++i)
             {
                 Task* task = impl->taskPool.obtainTask();
@@ -321,7 +321,7 @@ namespace orbit
 
             if (_elementCount % N != 0)
             {
-                const uint32_t handled = perElementCount * N;
+                const size_t handled = perElementCount * N;
 
                 Task* task = impl->taskPool.obtainTask();
                 task->kernel = _kernel;
@@ -418,7 +418,7 @@ namespace orbit
 
     void Scheduler::finishTask(Task* task)
     {
-        const int32_t openTasks = (--task->openTasks);
+        const size_t openTasks = (--task->openTasks);
 
         if (openTasks == 0)
         {
@@ -434,9 +434,9 @@ namespace orbit
         }
     }
 
-    int Scheduler::determineNumberOfTasks(uint32_t _elementCount, uint32_t _elementsPerTask)
+    size_t Scheduler::determineNumberOfTasks(size_t _elementCount, size_t _elementsPerTask)
     {
-        uint32_t numberOftasks = _elementCount / _elementsPerTask;
+        size_t numberOftasks = _elementCount / _elementsPerTask;
 
         return numberOftasks != 0 ? numberOftasks : 1;
     }

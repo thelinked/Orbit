@@ -85,18 +85,18 @@ namespace orbit
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0, 
-            uint32_t elementCount, uint32_t _elementsPerTask);
+            size_t elementCount, size_t _elementsPerTask);
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0, 
             InputStream _is1, OutputStream _os1,
-            uint32_t _elementCount, uint32_t _elementsPerTask);
+            size_t _elementCount, size_t _elementsPerTask);
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0, 
             InputStream _is1, OutputStream _os1,
             InputStream _is2, OutputStream _os2, 
-            uint32_t _elementCount, uint32_t _elementsPerTask);
+            size_t _elementCount, size_t _elementsPerTask);
 
         void addChild(const TaskId& _parent, const TaskId& _child);
         void runTask(const TaskId& _id);
@@ -111,7 +111,7 @@ namespace orbit
         void finishTask(Task* task);
         bool canExecuteTask(Task* _task);
 
-        int determineNumberOfTasks(uint32_t _elementCount, uint32_t _elementsPerTask);
+        size_t determineNumberOfTasks(size_t _elementCount, size_t _elementsPerTask);
     private:
         Pimpl *impl;
     };

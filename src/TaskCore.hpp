@@ -13,34 +13,34 @@ namespace orbit
     }
     struct TaskId
     {
-        typedef int32_t Offset;
-        inline TaskId(Offset _offset, int32_t _generation) : offset(_offset), generation(_generation) {}
+        typedef size_t Offset;
+        inline TaskId(Offset _offset, size_t _generation) : offset(_offset), generation(_generation) {}
 
         Offset offset;
-        int32_t generation;
+        size_t generation;
     };
 
     struct InputStream
     {
-        inline InputStream(void* _data, uint32_t _stride) : data(_data), elementStride(_stride){}
+        inline InputStream(void* _data, size_t _stride) : data(_data), elementStride(_stride){}
 
         void* data;
-        uint32_t elementStride;
+        size_t elementStride;
     };
 
     struct OutputStream
     {
-        inline OutputStream(void* _data, uint32_t _stride) : data(_data), elementStride(_stride) {}
+        inline OutputStream(void* _data, size_t _stride) : data(_data), elementStride(_stride) {}
 
         void* data;
-        uint32_t elementStride;
+        size_t elementStride;
     };
 
     struct TaskData
     {
         struct StreamingData
         {
-            uint32_t elementCount;
+            size_t elementCount;
             void* inputStreams[3];
             void* outputStreams[3];
         };
@@ -66,7 +66,7 @@ namespace orbit
             parent = Task::NO_PARENT;
         }
         Freelist* unusedFreelistAlias;
-        std::atomic<int> openTasks;
+        std::atomic<size_t> openTasks;
         int32_t generation;
         TaskId::Offset parent;
         Kernel kernel;

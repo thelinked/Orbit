@@ -8,27 +8,27 @@ namespace orbit
 
     struct TaskId
     {
-        typedef int32_t Offset;
-        inline TaskId(Offset _offset, int32_t _generation) : offset(_offset), generation(_generation) {}
+        typedef size_t Offset;
+        inline TaskId(Offset _offset, size_t _generation) : offset(_offset), generation(_generation) {}
 
         Offset offset;
-        int32_t generation;
+        size_t generation;
     };
 
     struct InputStream
     {
-        inline InputStream(void* _data, uint32_t _stride) : data(_data), elementStride(_stride){}
+        inline InputStream(void* _data, size_t _stride) : data(_data), elementStride(_stride){}
 
         void* data;
-        uint32_t elementStride;
+        size_t elementStride;
     };
 
     struct OutputStream
     {
-        inline OutputStream(void* _data, uint32_t _stride) : data(_data), elementStride(_stride) {}
+        inline OutputStream(void* _data, size_t _stride) : data(_data), elementStride(_stride) {}
 
         void* data;
-        uint32_t elementStride;
+        size_t elementStride;
     };
 
 
@@ -36,7 +36,7 @@ namespace orbit
     {
         struct StreamingData
         {
-            uint32_t elementCount;
+            size_t elementCount;
             void* inputStreams[3];
             void* outputStreams[3];
         };
@@ -67,18 +67,18 @@ namespace orbit
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0,
-            uint32_t elementCount, uint32_t _elementsPerTask);
+            size_t elementCount, size_t _elementsPerTask);
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0,
             InputStream _is1, OutputStream _os1,
-            uint32_t _elementCount, uint32_t _elementsPerTask);
+            size_t _elementCount, size_t _elementsPerTask);
 
         TaskId addStreamingTask(Kernel _kernel, void *_kernelData,
             InputStream _is0, OutputStream _os0,
             InputStream _is1, OutputStream _os1,
             InputStream _is2, OutputStream _os2,
-            uint32_t _elementCount, uint32_t _elementsPerTask);
+            size_t _elementCount, size_t _elementsPerTask);
 
         void addChild(const TaskId& _parent, const TaskId& _child);
         void runTask(const TaskId& _id);
